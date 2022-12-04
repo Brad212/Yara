@@ -1,0 +1,140 @@
+---
+title: "Yara Air ambient data summary"
+author: "Brad Zhang"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+
+draft: "INTERNAL USE ONLY"
+output: 
+  word_document:
+    reference_docx: Data_dictionary_and_data_issues_template.docx
+code_folding: hide
+---
+
+:::{custom-style="Internal.use.Style"}
+INTERNAL USE ONLY
+:::
+
+
+
+```{r, echo=FALSE, message=FALSE,warning=FALSE}
+library(tidyverse);library(pander); library(captioner);library(gtable)
+setwd("C:/Users/213002h/OneDrive - Curtin/iDrive/Yara_data")
+```
+ 
+```{r, echo=FALSE, message=FALSE,warning=FALSE}
+#set pander table-layout options
+panderOptions('table.alignment.default', function(df)
+    ifelse(sapply(df, is.numeric), 'right', 'left'))
+panderOptions('table.split.table', Inf)
+panderOptions('big.mark', "")
+panderOptions('keep.trailing.zeros', TRUE)
+panderOptions("table.emphasize.rownames",FALSE)
+panderOptions('keep.line.breaks', TRUE)
+
+# #Set table and figure caption numbering
+table_nums <- captioner(prefix = "Table")
+```
+# Historical and current industrial data
+```{r health_passive, echo=FALSE}
+Yara_air_ambient <- data.frame(
+  Variable_names = c("Site",
+                    "Sampler_type",
+                    "Lot_number",
+                    "Sticker_ID",
+                    "Date_Time_on",
+                    "Date_Time_off",
+                    "Ammonia_as_N_pertube",
+                    "Nitrate_as_NO3_pertube",
+                    "Nitrite_as_NO2_pertube",
+                    "Sulphate_as_SO4_pertube",
+                    "NO2_pertube",
+                    "HNO3_pertube",
+                    "SO2_pertube",
+                    "NH3_pertube",
+                    "NO2_update_rate",
+                    "HNO3_update_rate",
+                    "SO2_update_rate", 
+                    "NH3_update_rate",
+                    "NO2_blank_corrected",
+                    "HNO3_blank_corrected",
+                    "SO2_blank_corrected",
+                    "NH3_blank_corrected",
+                    "NO2_temp_corrected",
+                    "HNO3_temp_corrected",
+                    "SO2_temp_corrected",
+                    "NH3_temp_corrected",
+                    "NO2",
+                    "HNO3",
+                    "SO2",
+                    "NH3",
+                    "Site_n",
+                    "longitude",
+                    "latitude",
+                    "Rock_type",
+                    "datefix"),
+  Notes = c("Yara air quality sampling sites",
+                    "CSIRO or Radiello",
+                    "Lot_number only for Radiello",
+                    "Sample individual ID",
+                    "Time starting the passive sampling",
+                    "Time ending the passive sampling",
+                    "Ammonia per tube as N",
+                    "Nitrate per tube as NO3",
+                    "Nitrite per tube as NO2",
+                    "Sulphate per tube as SO4",
+                    "NO2 per tube reported as gases",
+                    "HNO3 per tube reported as gases",
+                    "SO2 per tube reported as gases",
+                    "NH3 per tube reported as gases",
+                    "NO2 Uptake Rate (corrected for temp) (mL/min)",			
+                    "HNO3 Uptake Rate (corrected for temp) (mL/min)",
+                    "SO2 Uptake Rate (corrected for temp) (mL/min)", 
+                    "NH3 Uptake Rate (corrected for temp) (mL/min)",
+                    "Blank Corrected",
+                    "Blank Corrected",
+                    "Blank Corrected",
+                    "Blank Corrected",
+                    "Temperature Corrected",
+                    "Temperature Corrected",
+                    "Temperature Corrected",
+                    "Temperature Corrected",
+                    "NO2 Concentrations (Negative values reported as zero)",
+                    "HNO3 Concentrations (Negative values reported as zero)",
+                    "SO2 Concentrations (Negative values reported as zero)",
+                    "NH3 Concentrations (Negative values reported as zero)",
+                    "an individual number for each site",
+                    "",
+                    "",
+                    "Rock type",
+                    "a variable fixing the date issue"),
+  Units = c(rep("", 6),
+            rep("µg/tube (DL used for ND)", 8),
+            rep("mL/min", 4),
+            rep("µg/tube", 4),
+            rep("µg/m3", 8),
+            rep("", 5))
+)
+
+Yara_air_ambient_cap<-table_nums(name = "Yara_air_ambient.cap", 
+                          caption = "Summary table of Yara_air_ambient data")
+
+pander(Yara_air_ambient, style = "multiline", 
+      caption = Yara_air_ambient_cap, 
+       justify = c('left','left','left'))
+
+
+```
+
+_________________________________________________________________________________
+---
+## Notes:
+Yara Historical data from  Ambient Air_25_10_2022.xlsx at level 0. Passive sampling methods has been employed. The concentration of NO~2~, SO~2~, NH~3~ and NO~3~ was calculated using the following formula with temperature correction.    
+
+$$Q_K = Q_{298} (\frac{K}{298} )^{7,0}$$
+
+
+## Issues:
+- For sites, the site names were not filled in for each row. We need to use R to fix this.
+- Date variables were not in a consistent format.
+- Strings for the numerical variables such as concentrations or ug per tube were replaced by "missing". 
+- values in italics = nd, DL used, the information cannot be kept in the final csv file.

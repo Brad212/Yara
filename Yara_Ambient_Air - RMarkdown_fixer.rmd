@@ -1,0 +1,78 @@
+---
+output:
+  html_document: default
+  pdf_document: default
+---
+---
+title: "Yara Ambient air data"
+author: "Brad Zhang"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+draft: "INTERNAL USE ONLY"
+:::{custom-style="Internal.use.Style"}
+
+
+***Part 1-setup***
+```{r, message=FALSE,warning=FALSE}
+setwd("C:/Users/213002h/OneDrive - Curtin/iDrive/Yara_data")
+library(tidyverse)
+library(readxl)
+```
+***Part 2 -read the data and select variables and name the variables***
+```{r, message=FALSE, warning=FALSE}
+Ambient_Air = read_excel("Ambient Air_25_10_2022.xlsx", sheet = "Radiello Concn Calcs", skip=1)
+Ambient_Air2 = cbind(Ambient_Air[,1:10], Ambient_Air[,13:16],Ambient_Air[,22:33], Ambient_Air[,40:43]) 
+colnames(Ambient_Air2)[1:10]=c("Site", "Sampler_type", "Lot_number", "Sticker_ID", "Date_Time_on", "Date_Time_off", "Ammonia_as_N_pertube", "Nitrate_as_NO3_pertube", "Nitrite_as_NO2_pertube", "Sulphate_as_SO4_pertube")
+colnames(Ambient_Air2)[11:14]=c("NO2_pertube", "HNO3_pertube", "SO2_pertube", "NH3_pertube")
+colnames(Ambient_Air2)[15:18]=c("NO2_uptake_rate", "HNO3_uptake_rate", "SO2_uptake_rate", "NH3_uptake_rate")
+colnames(Ambient_Air2)[19:22]=c("NO2_blank_corrected", "HNO3_blank_corrected", "SO2_blank_corrected", "NH3_blank_corrected")
+colnames(Ambient_Air2)[23:26]=c("NO2_temp_corrected", "HNO3_temp_corrected", "SO2_temp_corrected", "NH3_temp_corrected")
+colnames(Ambient_Air2)[27:30]=c("NO2", "HNO3", "SO2", "NH3")
+```
+**Part 3 -adding site names for "NA"**
+  ```{r, message=FALSE,warning=FALSE}
+site=Ambient_Air2[[1]]
+x=site[1]
+for (i in seq_along(site)) {
+  if (is.na(site[i])==T) {
+    site[i]=x
+  }
+  else {
+    x=site[i]
+  }
+} 
+Ambient_Air2$Site=site
+```
+***Part 4 -change the variables from Character to numeric with a round 2 and add site ID*** 
+```{r, message=FALSE, warning=FALSE}
+Ambient_Air2[,7:30] = lapply(Ambient_Air2[,7:30], as.numeric)
+Ambient_Air2[,7:30] = lapply(Ambient_Air2[,7:30], round, 2)
+Ambient_Air2$Site_n = as.numeric(substr(Ambient_Air2$Site, 6,6))
+```
+**Part 5 -add the GPS and Rocktype**
+```{r}
+Ambient_Air2$longitude = ifelse(Ambient_Air2$Site_n==5, 116.769256, ifelse(Ambient_Air2$Site_n==6, 116.7859513, 116.7884007))
+Ambient_Air2$latitude = ifelse(Ambient_Air2$Site_n==5, -20.62107548, ifelse(Ambient_Air2$Site_n==6, -20.61778979, -20.63722019))
+Ambient_Air2$Rock_type= ifelse(Ambient_Air2$Site_n<7, "Granophyre", "Gabbro")
+```
+**Part 6 -Fix the date issue**
+```{r, message=FALSE, warning=FALSE}
+Ambient_Air2$datefix = ifelse(as.numeric(substr(Ambient_Air2$Date_Time_on, 1,2))==43, 1,2)
+Ambient_Air2$date_on_number = ifelse(Ambient_Air2$datefix==1, as.numeric(Ambient_Air2$Date_Time_on), 0)  
+Ambient_Air2$date_on_date = as.Date(Ambient_Air2$date_on_number, origin = "1899-12-30")    
+Ambient_Air2$Date_Time_on = ifelse(Ambient_Air2$datefix==1, as.character(Ambient_Air2$date_on_date), Ambient_Air2$Date_Time_on)
+Ambient_Air2$date_off_number = ifelse(Ambient_Air2$datefix==1, as.numeric(Ambient_Air2$Date_Time_off), 0)  
+Ambient_Air2$date_off_date = as.Date(Ambient_Air2$date_off_number, origin = "1899-12-30")    
+Ambient_Air2$Date_Time_off = ifelse(Ambient_Air2$datefix==1, as.character(Ambient_Air2$date_off_date), Ambient_Air2$Date_Time_off)
+
+Ambient_Air2 <- subset(Ambient_Air2, select = -c(date_on_number, date_on_date, date_off_number, date_off_date))
+```
+**Part 7 -save the data as Ambient Ambient_Air.csv**
+```{r}
+write.csv(Ambient_Air2, "Ambient_Air_22_11_2022.csv")
+```
+### Session Info
+```{r}
+sessionInfo()
+```
+
+
